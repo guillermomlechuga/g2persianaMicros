@@ -42,6 +42,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
+ADC_HandleTypeDef hadc2;
 
 I2C_HandleTypeDef hi2c1;
 
@@ -50,6 +51,7 @@ TIM_HandleTypeDef htim2;
 /* USER CODE BEGIN PV */
 volatile int boton_modo=0, p_arriba=0,p_abajo=1,subiendo=0,bajando=0; //Empieza abajo y en el modo manual.
 __IO uint16_t  LDR=0; //Este será el valor al que igualaremos el obtenido por el sensor de luminosidad.
+__IO uint16_t  TEM=0; //Este será el valor al que igualaremos el obtenido por el sensor de temperatura.
 uint8_t contador=0;
 /* USER CODE END PV */
 
@@ -59,6 +61,7 @@ static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_I2C1_Init(void);
+static void MX_ADC2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -71,9 +74,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	{
 		if(contador==0)
 		{
-		boton_modo=1;  //SI CAMBIA A AUTOMATICO PERO LUEGO NO VUELVE A MANUAL HAY QUE HACER UN IF Y PONERLO A CERO CUANDO ESTA A 1
-		contador=1;
+			boton_modo=1;  //SI CAMBIA A AUTOMATICO PERO LUEGO NO VUELVE A MANUAL HAY QUE HACER UN IF Y PONERLO A CERO CUANDO ESTA A 1
+			contador=1;
 		}
+		else if (contador==1){
+			boton_modo=2;
+			contador=2;
+		}
+
 		else{
 			boton_modo=0;
 			contador=0;
@@ -130,6 +138,7 @@ int main(void)
   MX_ADC1_Init();
   MX_TIM2_Init();
   MX_I2C1_Init();
+  MX_ADC2_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_1);
   /* USER CODE END 2 */
@@ -191,13 +200,14 @@ int main(void)
 //	MODO CONTROL POR LUZ
 	  HAL_ADC_Start(&hadc1);
 
+
 	  	if (HAL_ADC_PollForConversion(&hadc1,1000000)==HAL_OK){
 	  	LDR=HAL_ADC_GetValue(&hadc1);
 	  	}
 
-    while(boton_modo){
+    while(boton_modo==1){
 
-    	if(LDR<50 && p_abajo==1){	//Hay poca luz. Subiremos la persiana
+    	if(LDR<50 && p_abajo==1 ){	//Si hay poca luz subimos la persiana
     		 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12,0);
     		 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,0);
    		     HAL_GPIO_WritePin(GPIOD,GPIO_PIN_14,1);
@@ -221,11 +231,12 @@ int main(void)
 
     	     HAL_ADC_Start(&hadc1);
 
+
      if (HAL_ADC_PollForConversion(&hadc1,1000000)==HAL_OK){
      LDR=HAL_ADC_GetValue(&hadc1);}
 
 
-     if(LDR>50 && p_arriba==1 ){ //Bajando
+     if(LDR>50  && p_arriba==1 ){ //Mucha luz bajamos la persiana.
     	 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12,1);
     	 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,0);
     	 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_14,0);
@@ -243,10 +254,13 @@ int main(void)
 
     	 bajando=0;
     	 p_arriba=0;
-    	    	     subiendo=0;
-    	    	     p_abajo=1;
+         subiendo=0;
+    	 p_abajo=1;
+     }
+
 
     	 HAL_ADC_Start(&hadc1);
+
 
     	 if (HAL_ADC_PollForConversion(&hadc1,1000000)==HAL_OK)
     	 {
@@ -255,6 +269,80 @@ int main(void)
 
 
      }
+
+    while(boton_modo==2){ //SI ESTA EN MODO TEMPERATURA
+    	 //	MODO CONTROL POR Temperatura
+    		  HAL_ADC_Start(&hadc2);
+    		  if (HAL_ADC_PollForConversion(&hadc2,1000000)==HAL_OK){
+    		  		  	TEM=HAL_ADC_GetValue(&hadc2);
+    		  		  	}
+
+    		  if(TEM<40 && p_abajo==1 ){	//Si hay poca temperatura subimos la persiana
+    		      		 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12,0);
+    		      		 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,0);
+    		     		 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_14,1);
+    		      		 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,0);
+
+
+    		      	for (int i=0;i<=1200;i=i+125){
+    		      			  __HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,i);
+    		      			  HAL_Delay(200);
+    		      		      }
+    		      	     HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12,0);
+    		      	     HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,1);
+    		      	   	 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_14,0);
+    		      	     HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,0);
+
+    		      	     bajando=0;
+    		       		 p_arriba=1;
+    		      	     subiendo=0;
+    		      	     p_abajo=0;
+    		      	}
+
+
+    		      	     HAL_ADC_Start(&hadc2);
+
+
+    		       if (HAL_ADC_PollForConversion(&hadc2,1000000)==HAL_OK){
+    		           TEM=HAL_ADC_GetValue(&hadc2);}
+
+    		       if(TEM>40  && p_arriba==1 ){ //Mucha temperatura bajamos la persiana.
+    		      	 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12,1);
+    		      	 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,0);
+    		      	 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_14,0);
+    		      	 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,0);
+
+
+    		      	 for (int i=1200;i>=0;i=i-125){
+    		      	         __HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,i);
+    		      	     	HAL_Delay(200);
+    		      	     	}
+    		      	 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12,0);
+    		      	 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,0);
+    		      	 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_14,0);
+    		      	 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,1);
+
+    		      	 bajando=0;
+    		      	 p_arriba=0;
+    		           subiendo=0;
+    		      	 p_abajo=1;
+    		       }
+
+
+
+    		      	 HAL_ADC_Start(&hadc2);
+
+
+    		      	 if (HAL_ADC_PollForConversion(&hadc2,1000000)==HAL_OK)
+    		      	    	 {
+    		      	    	  TEM=HAL_ADC_GetValue(&hadc2);
+    		      	    	 }
+
+
+
+    }
+
+
     } //del while
 
 
@@ -262,7 +350,7 @@ int main(void)
 
 
 
-	  }
+
 
   /* USER CODE END 3 */
 }
@@ -362,6 +450,58 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
+  * @brief ADC2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC2_Init(void)
+{
+
+  /* USER CODE BEGIN ADC2_Init 0 */
+
+  /* USER CODE END ADC2_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC2_Init 1 */
+
+  /* USER CODE END ADC2_Init 1 */
+
+  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+  */
+  hadc2.Instance = ADC2;
+  hadc2.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
+  hadc2.Init.Resolution = ADC_RESOLUTION_8B;
+  hadc2.Init.ScanConvMode = DISABLE;
+  hadc2.Init.ContinuousConvMode = DISABLE;
+  hadc2.Init.DiscontinuousConvMode = DISABLE;
+  hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc2.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc2.Init.NbrOfConversion = 1;
+  hadc2.Init.DMAContinuousRequests = DISABLE;
+  hadc2.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  if (HAL_ADC_Init(&hadc2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_4;
+  sConfig.Rank = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC2_Init 2 */
+
+  /* USER CODE END ADC2_Init 2 */
 
 }
 
