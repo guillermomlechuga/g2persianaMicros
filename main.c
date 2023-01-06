@@ -148,9 +148,12 @@ int main(void)
 		  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_14,1);
 		  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,0);
 
-		  for (int i=998;i>=0;i=i-30){
-		  __HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,i);
-		  HAL_Delay(200);}
+
+		  for (int i=0;i<=1200;i=i+125){
+		  		  __HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,i);
+		  		  HAL_Delay(200);
+		  	      }
+
 		//PERSIANA ARRIBA
 		  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12,0);
 		  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,1);
@@ -170,10 +173,10 @@ int main(void)
 		  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_14,0);
 		  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,0);
 
-	      for (int i=0;i<=998;i=i+30){
-		  __HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,i);
-		  HAL_Delay(200);
-	      }
+
+	      for (int i=1200;i>=0;i=i-125){
+	      		  __HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,i);
+	      		  HAL_Delay(200);}
 
 		  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12,0);
 		  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,0);
@@ -200,10 +203,11 @@ int main(void)
    		     HAL_GPIO_WritePin(GPIOD,GPIO_PIN_14,1);
     		 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,0);
 
-    	for (int i=998;i>=0;i=i-30){
-        __HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,i);
-    	HAL_Delay(200);
-    	}
+
+    	for (int i=0;i<=1200;i=i+125){
+    			  __HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,i);
+    			  HAL_Delay(200);
+    		      }
     	     HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12,0);
     	     HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,1);
     	   	 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_14,0);
@@ -227,10 +231,11 @@ int main(void)
     	 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_14,0);
     	 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_15,0);
 
-    	 for (int i=0;i<=998;i=i+30){ //Se ha bajado ya
-    	 __HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,i);
-    	 HAL_Delay(200);}
 
+    	 for (int i=1200;i>=0;i=i-125){
+    	         __HAL_TIM_SET_COMPARE(&htim2,TIM_CHANNEL_1,i);
+    	     	HAL_Delay(200);
+    	     	}
     	 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12,0);
     	 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_13,0);
     	 HAL_GPIO_WritePin(GPIOD,GPIO_PIN_14,0);
@@ -285,7 +290,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 8;
-  RCC_OscInitStruct.PLL.PLLN = 84;
+  RCC_OscInitStruct.PLL.PLLN = 168;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 7;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -299,10 +304,10 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV8;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
   {
     Error_Handler();
   }
@@ -329,7 +334,7 @@ static void MX_ADC1_Init(void)
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   */
   hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_8B;
   hadc1.Init.ScanConvMode = DISABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
@@ -415,7 +420,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 83;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 999;
+  htim2.Init.Period = 100000;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
