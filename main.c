@@ -53,6 +53,7 @@ volatile int boton_modo=0, p_arriba=0,p_abajo=1,subiendo=0,bajando=0; //Empieza 
 __IO uint16_t  LDR=0; //Este será el valor al que igualaremos el obtenido por el sensor de luminosidad.
 __IO uint16_t  TEM=0; //Este será el valor al que igualaremos el obtenido por el sensor de temperatura.
 uint8_t contador=0;
+volatile int button_int=0; //DEBOUNCER
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -72,6 +73,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 
 	if (GPIO_Pin==GPIO_PIN_0)  //Boton de usuario
 	{
+		button_int=1;//DEBOUNCER
 		if(contador==0)
 		{
 			boton_modo=1;  //SI CAMBIA A AUTOMATICO PERO LUEGO NO VUELVE A MANUAL HAY QUE HACER UN IF Y PONERLO A CERO CUANDO ESTA A 1
@@ -141,6 +143,8 @@ int main(void)
   MX_ADC2_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_1);
+  int counter=HAL_GetTick();//DEBOUNCER
+  	uint8_t button_count=0;//DEBOUNCER
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -150,6 +154,28 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  //DEBOUNCER
+		if (button_int==1){
+				if (HAL_GetTick()-counter>=20){
+					counter=HAL_GetTick();
+					if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)!=1){
+						button_count=0;
+					}
+					else{
+						button_count++;
+					}
+					if (button_count==3){ //Periodo antirebotes
+						button_count=0;
+						button_int=0;
+					}
+				}
+			}
+		//FINAL DEBOUNCER
+
+
+
+
+
 	  //SUBIMOS PERSIANA
 	  while((subiendo==1)&&(p_arriba==0)){ //Subimos persiana
 		  HAL_GPIO_WritePin(GPIOD,GPIO_PIN_12,0);
